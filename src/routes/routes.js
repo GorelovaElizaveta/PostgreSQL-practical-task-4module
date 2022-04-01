@@ -8,6 +8,7 @@ module.exports = (app) => {
   router.get("/findPagination", tutorialControllers.findPagination);
   router.get("/findSortPag", tutorialControllers.findSortPag);
   router.get("/findSampling", tutorialControllers.findSampling);
+  router.get("/findAge", tutorialControllers.findAge);
 
   router.delete("/", tutorialControllers.remove);
 
