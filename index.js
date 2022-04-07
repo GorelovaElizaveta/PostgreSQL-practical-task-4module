@@ -11,8 +11,6 @@ require('./src/routes/routes')(app);
 
 db.sequelize.sync();
 
-// db.sequelize.sync({force: true});
-
 app.listen(8080, () => {
   console.log('Application listening on port 8080')
 })
