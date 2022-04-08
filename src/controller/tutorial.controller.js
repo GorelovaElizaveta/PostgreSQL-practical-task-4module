@@ -2,8 +2,13 @@ const db = require("../models");
 
 const Tutorial = db.tutorials;
 
-
 exports.create = (req, res) => {
+  if (!(text && age && country && owner)) {
+    res.status(400).send({
+      message: "Content can not be empty!",
+    });
+  }
+
   const { text, age, country, owner } = req.body;
   if (text && age && owner && country) {
     const tutorial = {
@@ -14,11 +19,10 @@ exports.create = (req, res) => {
     };
     Tutorial.create(tutorial)
       .then((data) => {
-        if(data){
-        res.send(data);
-        }
-        else {
-          res.status(500).send("task not created")
+        if (data) {
+          res.send(data);
+        } else {
+          res.status(500).send("task not created");
         }
       })
       .catch((err) => {
@@ -31,16 +35,19 @@ exports.create = (req, res) => {
   }
 };
 
- // получение данных по определенному полю
+// получение данных по определенному полю
 exports.findValue = (req, res) => {
+  if (!req.query) {
+    res.status(500).send("data not found");
+  }
 
   Tutorial.findAll({ where: req.query })
     .then((data) => {
-      if(data){
-      res.send(data)
+      if (data) {
+        res.send(data);
       } else {
-        res.status(500).send("data retrieval problem") 
-      };
+        res.status(500).send("data retrieval problem");
+      }
     })
     .catch((err) => {
       res.status(500).send({
@@ -52,15 +59,14 @@ exports.findValue = (req, res) => {
 
 //создание фильтрации данных по нескольким полям
 exports.findFiltr = (req, res) => {
-
-  if(req.query){
+  if (req.query) {
     Tutorial.findAll({ where: req.query })
       .then((data) => {
-        if(data){
-        res.send(data)
+        if (data) {
+          res.send(data);
         } else {
-          res.status(500).send("filtering not found")
-        };
+          res.status(500).send("filtering not found");
+        }
       })
       .catch((err) => {
         res.status(500).send({
@@ -75,22 +81,15 @@ exports.findFiltr = (req, res) => {
 
 //создание сортировки функционалом sequelize
 exports.findSort = (req, res) => {
-  const currentValue = req.query.currentValue;
-  const currentValueSort = req.query.currentValueSort;
-  if (currentValueSort == -1) {
-    Tutorial.findAll({ order: [[currentValue, "DESC"]] })
-      .then((data) => {
-        res.send(data);
-      })
-      .catch((err) => {
-        res.status(500).send({
-          message:
-            err.message || `Some error occurred while retrieving tutorials.`,
-        });
-      });
+  const filter = req.params.filter;
+  const direction = req.params.direction;
+
+  if (!filter || !direction) {
+    res.status(500).send("data not found");
   }
-  if (currentValueSort == 1 || !currentValueSort) {
-    Tutorial.findAll({ order: [[currentValue]] })
+
+  if (filter && direction) {
+    Tutorial.findAll({ order: [[filter, direction]] })
       .then((data) => {
         res.send(data);
       })
@@ -100,23 +99,24 @@ exports.findSort = (req, res) => {
             err.message || `Some error occurred while retrieving tutorials.`,
         });
       });
+  } else {
+    res.status(500).send("value cannot be empty");
   }
 };
 
 //пагинация
 exports.findPagination = (req, res) => {
   const { limit, page } = req.query;
-  const offset = limit * (page - 1)
+  const offset = limit * (page - 1);
 
-  if(!limit || !page){
-  res.status(500).send("value cannot be empty")
+  if (!limit || !page) {
+    res.status(500).send("value cannot be empty");
   }
-  let checkLimit = req.query.hasOwnProperty("limit");
-  let checkPage = req.query.hasOwnProperty("page");
+  const checkLimit = req.query.hasOwnProperty("limit");
+  const checkPage = req.query.hasOwnProperty("page");
 
-    if (checkLimit & checkPage) {
-    
-    Tutorial.findAll({ limit, offset })
+  if (checkLimit && checkPage) {
+    Tutorial.findAll({ limit, offset }, { order: ["id"] })
       .then((data) => {
         res.send(data);
       })
@@ -126,57 +126,39 @@ exports.findPagination = (req, res) => {
             err.message || `Some error occurred while retrieving tutorials.`,
         });
       });
-    } else {
-      res.status(500).send("limit and offset not found");
+  } else {
+    res.status(500).send("data not found");
   }
 };
 
-
-
-
-
 //Сорт и паг
 exports.findSortPag = (req, res) => {
+  const filter = req.params.filter;
+  const direction = req.params.direction;
+  const page = req.params.page;
+  const limit = req.params.limit;
 
-  const {limit, page, currentValue, currentValueSort} = req.body;
-  const offset = limit * (page - 1)
-  const value = req.query
+  if (!filter || !direction || !page || !limit) {
+    res.status(500).send("data not found");
+  }
 
-  if (limit && page && currentValue && currentValueSort) {
-    if (currentValueSort == false) {
-      Tutorial.findAll(
-        { where: value },
-        { limit, offset },
-        { order: [[currentValue, "DESC"]] }
-      )
-        .then((data) => {
-          res.send(data);
-        })
-        .catch((err) => {
-          res.status(500).send({
-            message:
-              err.message || `Some error occurred while retrieving tutorials.`,
-          });
+  if (filter && direction && page && limit) {
+    Tutorial.findAll({
+      order: [[filter, direction]],
+      offset: limit * (page - 1),
+      limit: limit,
+    })
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message:
+            err.message || `Some error occurred while retrieving tutorials.`,
         });
-    }
-    if (currentValueSort == true) {
-      Tutorial.findAll(
-        { where: value },
-        { limit, offset },
-        { order: [[currentValue]] }
-      )
-        .then((data) => {
-          res.send(data);
-        })
-        .catch((err) => {
-          res.status(500).send({
-            message:
-              err.message || `Some error occurred while retrieving tutorials.`,
-          });
-        });
-    }
+      });
   } else {
-    res.send("limit, country and offset not found");
+    res.status(500).send("data not found");
   }
 };
 
@@ -184,14 +166,23 @@ exports.findSortPag = (req, res) => {
 exports.findSampling = (req, res) => {
   const currentValueOne = req.query.currentValueOne;
   const currentValueTwo = req.query.currentValueTwo;
-  Tutorial.findAll({ attributes: [currentValueOne, currentValueTwo] })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || `Some error occurred while retrieving tutorials.`,
+
+  if (!currentValueOne || !currentValueTwo) {
+    res.status(500).send("data not found");
+  }
+
+  if (currentValueOne && currentValueTwo) {
+    Tutorial.findAll({ attributes: [currentValueOne, currentValueTwo] })
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message:
+            err.message || `Some error occurred while retrieving tutorials.`,
+        });
       });
-    });
+  } else {
+    res.status(500).send("data not found");
+  }
 };
