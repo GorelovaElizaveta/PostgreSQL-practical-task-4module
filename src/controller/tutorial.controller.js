@@ -59,8 +59,18 @@ exports.findValue = (req, res) => {
 
 //создание фильтрации данных по нескольким полям
 exports.findFiltr = (req, res) => {
-  if (req.query) {
-    Tutorial.findAll({ where: req.query })
+
+  const filtr = {
+    value: req.query.value,
+    value2: req.query.value2
+  }
+
+  if(!filtr) {
+  res.status(500).send( "p error occurred while retrieving tutorials")
+  }
+
+  if (filtr) {
+    Tutorial.findAll({ where: filtr })
       .then((data) => {
         if (data) {
           res.send(data);
@@ -81,15 +91,15 @@ exports.findFiltr = (req, res) => {
 
 //создание сортировки функционалом sequelize
 exports.findSort = (req, res) => {
-  const filter = req.params.filter;
+  const Sort = req.params.filter;
   const direction = req.params.direction;
 
-  if (!filter || !direction) {
+  if (!Sort || !direction) {
     res.status(500).send("data not found");
   }
 
-  if (filter && direction) {
-    Tutorial.findAll({ order: [[filter, direction]] })
+  if (Sort && direction) {
+    Tutorial.findAll({ order: [[Sort, direction]] })
       .then((data) => {
         res.send(data);
       })
